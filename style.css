@@ -1,75 +1,32 @@
-body {
-    margin: 0;
-    padding: 0;
-    font-family: sans-serif;
-    background-color: #ffffff;
-    display: flex;
-    justify-content: center;
-    height: 100vh;
-    overflow: hidden;
-}
-
-#app {
-    width: 100%;
-    max-width: 500px;
-}
-
-.container {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    padding: 50px 20px 100px 20px;
-    box-sizing: border-box;
-}
-
-/* 운동 시작 버튼 */
-.big-start-btn {
-    width: 250px;
-    height: 250px;
-    border-radius: 50%;
+/* 기존 .big-start-btn을 대체하거나 추가하세요 */
+.wide-rect-btn {
+    width: 90%;
+    height: 120px;
+    border-radius: 15px;
     border: none;
     background: linear-gradient(145deg, #007bff, #0056b3);
     color: white;
-    font-size: 30px;
+    font-size: 24px;
     font-weight: bold;
-    box-shadow: 0 10px 30px rgba(0, 123, 255, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
     cursor: pointer;
+    margin: 20px 0;
 }
 
-.big-start-btn:active {
-    transform: scale(0.96);
-}
-
-/* 하단 메뉴 */
-.bottom-nav {
-    position: fixed;
-    bottom: 0;
+.exercise-image-area {
     width: 100%;
-    max-width: 500px;
-    height: 70px;
+    height: 200px;
+    background-color: #f8f9fa;
+    border-radius: 15px;
     display: flex;
-    justify-content: space-around;
     align-items: center;
-    background: #f1f3f5;
-    border-top: 1px solid #e9ecef;
+    justify-content: center;
+    margin-bottom: 20px;
+    border: 1px dashed #dee2e6;
 }
 
-.bottom-nav button {
-    background: none;
-    border: none;
-    color: #495057;
-    font-size: 14px;
-    font-weight: bold;
-}
-
-/* 초기 설정 버튼 */
-.setup-btn {
-    padding: 20px 40px;
-    background: #343a40;
-    color: white;
-    border: none;
-    border-radius: 12px;
+.progress-text {
     font-size: 18px;
+    color: #888;
+    margin-bottom: 5px;
 }
