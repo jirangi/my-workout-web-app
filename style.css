@@ -1,50 +1,38 @@
-/* 상단 헤더 버튼 스타일 수정 */
-.header-btn {
-    background: #f1f3f5;
-    color: #666;
-    border: none;
-    padding: 6px 10px;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: bold;
-    cursor: pointer;
-}
-
-.exit-btn {
-    background: #ff4757;
-    color: white;
-}
-
-/* 전체 순서 모달 스타일 */
-.modal-overlay {
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: rgba(0,0,0,0.7);
-    display: none; /* 기본 숨김 */
-    z-index: 100;
-    justify-content: center;
-    align-items: center;
-}
-
-.modal-content {
-    width: 85%;
-    max-height: 70%;
-    background: white;
-    border-radius: 20px;
-    padding: 25px;
-    overflow-y: auto;
-    position: relative;
-}
-
-.routine-item {
+/* 템포 조절 박스 */
+.tempo-controller {
     display: flex;
-    justify-content: space-between;
-    padding: 12px 0;
-    border-bottom: 1px solid #eee;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px 0;
+    background: #f1f3f5;
+    padding: 10px 20px;
+    border-radius: 15px;
 }
 
-.routine-item.current {
+.tempo-btn {
+    background: none;
+    border: none;
+    font-size: 30px;
     color: #007bff;
+    cursor: pointer;
+    line-height: 1;
+}
+
+.tempo-value {
+    font-size: 24px;
     font-weight: bold;
+    margin: 5px 0;
+}
+
+.tempo-label {
+    font-size: 12px;
+    color: #888;
+}
+
+/* 박자 텍스트 효과 */
+.beat-text {
+    font-size: 40px;
+    font-weight: 900;
+    color: #ff4757;
+    height: 50px;
 }
