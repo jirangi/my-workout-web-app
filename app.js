@@ -1,28 +1,26 @@
 const savedData = localStorage.getItem('my_workout_routine');
-const workoutData = savedData ? JSON.parse(savedData) : { name: "기본 루틴", level: "intermediate" }; // 중급자 모드 가정
+const workoutData = savedData ? JSON.parse(savedData) : { name: "기본 루틴", level: "intermediate" }; 
 const app = document.getElementById('app');
 
 let currentExIdx = 0;   
 let currentSet = 1;     
 let workoutHistory = []; 
 
-// 운동 리스트 (중급자용 2주 증량 로직 포함)
 const exercises = [
-    { name: "벤치프레스", type: "count", unitType: "weight", weight: 40, count: 12, sets: 3, lastUpdate: "2026-02-10" },
+    { name: "벤치프레스", type: "count", unitType: "weight", weight: 40, count: 12, sets: 3, lastUpdate: "2026-01-27" },
     { name: "복근운동", type: "tempo", goalCount: 30, sets: 3, restTime: 60 },
     { name: "스쿼트", type: "time", unitType: "time", workTime: 40, restTime: 20, sets: 4 }
 ];
 
 function init() {
-    applyProgression(); // 증량 로직 적용
+    applyProgression(); 
     if (workoutData) renderMain();
     else renderSetup();
 }
 
-// 2주마다 5kg 증량 로직 (중급자 전용)
+// 중급자용 2주 5kg 자동 증량 로직
 function applyProgression() {
     if (workoutData.level !== "intermediate") return;
-    
     const today = new Date();
     exercises.forEach(ex => {
         if (ex.unitType === "weight" && ex.lastUpdate) {
@@ -31,7 +29,6 @@ function applyProgression() {
             if (diffDays >= 14) {
                 ex.weight += 5;
                 ex.lastUpdate = today.toISOString().split('T')[0];
-                console.log(`${ex.name} 무게가 5kg 증량되었습니다!`);
             }
         }
     });
@@ -51,27 +48,25 @@ function getFullLayout(contentHTML, btnHTML) {
 
 function renderExercise() {
     const ex = exercises[currentExIdx];
-    
     let controlHTML = "";
+
     if (ex.unitType === "weight") {
         controlHTML = `
             <div class="stepper-container">
                 <div class="step-box">
                     <button class="step-btn" onclick="adjVal('weight', 5)">▲</button>
-                    <input type="number" class="step-input" value="${ex.weight}" onchange="ex.weight=Number(this.value)">
+                    <input type="number" class="step-input" value="${ex.weight}" onchange="exercises[currentExIdx].weight=Number(this.value)">
                     <button class="step-btn" onclick="adjVal('weight', -5)">▼</button>
                     <span style="font-size:12px; color:#888;">무게(kg)</span>
                 </div>
                 <div class="step-box">
                     <button class="step-btn" onclick="adjVal('count', 1)">▲</button>
-                    <input type="number" class="step-input" value="${ex.count}" onchange="ex.count=Number(this.value)">
+                    <input type="number" class="step-input" value="${ex.count}" onchange="exercises[currentExIdx].count=Number(this.value)">
                     <button class="step-btn" onclick="adjVal('count', -1)">▼</button>
                     <span style="font-size:12px; color:#888;">횟수(개)</span>
                 </div>
             </div>
         `;
-    } else if (ex.type === "tempo") {
-        // ... (v0.7.0 템포 컨트롤러 로직 유지) ...
     }
 
     const content = `
@@ -80,33 +75,25 @@ function renderExercise() {
         <h2 style="color: #007bff;">Set ${currentSet} / ${ex.sets}</h2>
         ${controlHTML}
     `;
-    
     const btnText = currentSet === ex.sets ? "종목 완료" : "세트 완료";
     const btn = `
         <button class="wide-blue-btn" onclick="handleSetComplete()">${btnText}</button>
-        <button class="skip-ex-btn" onclick="skipSet()">이 세트 건너뛰기</button>
+        <button class="skip-ex-btn" onclick="moveToNext(true)">이 세트 건너뛰기</button>
     `;
     app.innerHTML = getFullLayout(content, btn);
 }
 
 function adjVal(field, amount) {
-    const ex = exercises[currentExIdx];
-    ex[field] = Math.max(0, ex[field] + amount);
+    exercises[currentExIdx][field] = Math.max(0, exercises[currentExIdx][field] + amount);
     renderExercise();
 }
 
-function skipSet() {
-    workoutHistory.push({ name: exercises[currentExIdx].name, status: "skipped" });
-    moveToNext();
-}
-
 function handleSetComplete() {
-    const ex = exercises[currentExIdx];
-    workoutHistory.push({ name: ex.name, status: "completed" });
-    moveToNext();
+    workoutHistory.push({ name: exercises[currentExIdx].name, status: "completed" });
+    moveToNext(false);
 }
 
-function moveToNext() {
+function moveToNext(isSkip) {
     const ex = exercises[currentExIdx];
     if (currentSet < ex.sets) {
         currentSet++;
@@ -118,20 +105,16 @@ function moveToNext() {
 }
 
 function startRest(isNextEx) {
-    let ex = exercises[currentExIdx];
-    let timeLeft = isNextEx ? 30 : (ex.restTime || 20);
-    const nextName = isNextEx ? (exercises[currentExIdx + 1]?.name || "종료") : ex.name;
+    let timeLeft = isNextEx ? 30 : (exercises[currentExIdx].restTime || 20);
+    const nextName = isNextEx ? (exercises[currentExIdx + 1]?.name || "종료") : exercises[currentExIdx].name;
 
     const timerUI = () => {
-        const content = `
+        app.innerHTML = getFullLayout(`
             <div class="exercise-image-area"><span>[ 휴식 ]</span></div>
-            <h2 style="color:#adb5bd;">휴식 시간 조절 (클릭)</h2>
-            <input type="number" class="rest-input" value="${timeLeft}" 
-                   onchange="timeLeft=Number(this.value)">
+            <h2 style="color:#adb5bd;">휴식 시간 클릭하여 수정</h2>
+            <input type="number" class="rest-input" value="${timeLeft}" onchange="timeLeft=Number(this.value)">
             <p style="font-size:20px; margin-top:20px;">다음: <strong>${nextName}</strong></p>
-        `;
-        const btn = `<button class="wide-blue-btn" onclick="skipRest()">휴식 건너뛰기</button>`;
-        app.innerHTML = getFullLayout(content, btn);
+        `, `<button class="wide-blue-btn" onclick="skipRest()">휴식 건너뛰기</button>`);
     };
 
     timerUI();
@@ -149,5 +132,4 @@ function startRest(isNextEx) {
     window.skipRest = goNext;
 }
 
-// ... (renderMain, toggleModal 등 기타 함수는 v0.7.0과 동일) ...
 init();
