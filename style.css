@@ -1,66 +1,162 @@
-/* 중앙 정렬 시스템 */
-.main-content {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center; /* 수직 중앙 */
-    text-align: center;
-    width: 100%;
+const savedData = localStorage.getItem('my_workout_routine');
+const workoutData = savedData ? JSON.parse(savedData) : { name: "기본 루틴", level: "intermediate" }; 
+const app = document.getElementById('app');
+
+let currentExIdx = 0;   
+let currentSet = 1;     
+let isEditing = false;
+let workoutHistory = [];
+let tempoTimer = null; 
+let currentCount = 0;
+let currentBeat = 0;
+let tempo = 1.0;
+
+// 운동 데이터베이스 (데이터 동기화를 위해 전역 관리)
+let exercises = [
+    { name: "벤치프레스", category: "가슴", detail: "중부", unitType: "weight", weight: 40, count: 12, time: 40, sets: 3 },
+    { name: "복근운동", category: "복근", detail: "상하복부", unitType: "count", goalCount: 30, sets: 3, restTime: 60 },
+    { name: "스쿼트", category: "하체", detail: "대퇴사두", unitType: "time", weight: 0, count: 15, time: 40, sets: 4 }
+];
+
+function init() {
+    renderExercise();
 }
 
-/* 편집 모드 전용 스타일 */
-.edit-container {
-    display: none; /* 기본 숨김 */
-    flex-direction: column;
-    align-items: center;
-    background: #f8f9fa;
-    padding: 15px;
-    border-radius: 15px;
-    margin-top: 10px;
+// 레이아웃 엔진 (버튼 겹침 방지 구조)
+function getFullLayout(contentHTML, btnHTML) {
+    return `
+        <div class="header-area">
+            <button class="header-btn" onclick="toggleModal(true)">순서 확인</button>
+            <span style="font-weight:bold; color:#333;">종목 (${currentExIdx + 1}/${exercises.length})</span>
+            <button class="header-btn exit-btn" onclick="renderReport()">운동 종료</button>
+        </div>
+        <div class="main-content">
+            ${contentHTML}
+        </div>
+        <div class="action-area">
+            ${btnHTML}
+        </div>
+    `;
 }
 
-.display-value {
-    font-size: 32px;
-    font-weight: bold;
-    color: #007bff;
-    cursor: pointer;
-    text-decoration: underline dotted;
+function renderExercise() {
+    if (tempoTimer) clearInterval(tempoTimer); // 중복 타이머 방지
+    const ex = exercises[currentExIdx];
+    
+    // 모드 전환 탭
+    const modeTabs = `
+        <div class="mode-tab-container" style="display:flex; gap:10px; margin-bottom:20px; justify-content:center;">
+            <div class="mode-tab ${ex.unitType==='weight'?'active':''}" onclick="changeMode('weight')" style="cursor:pointer; padding:5px 15px; border:1px solid #ddd; border-radius:20px;">무게+횟수</div>
+            <div class="mode-tab ${ex.unitType==='count'?'active':''}" onclick="changeMode('count')" style="cursor:pointer; padding:5px 15px; border:1px solid #ddd; border-radius:20px;">횟수</div>
+            <div class="mode-tab ${ex.unitType==='time'?'active':''}" onclick="changeMode('time')" style="cursor:pointer; padding:5px 15px; border:1px solid #ddd; border-radius:20px;">시간</div>
+        </div>
+    `;
+
+    let displayHTML = "";
+    let editUI = "";
+
+    // 값 표시 및 편집 UI
+    if (ex.unitType === 'weight') {
+        displayHTML = `<div class="display-value" onclick="toggleEdit()" style="font-size:40px; color:#007bff; font-weight:bold; cursor:pointer; margin-bottom:20px;">${ex.weight}kg x ${ex.count}개</div>`;
+        editUI = `<div id="editBox" style="display:${isEditing?'flex':'none'}; gap:20px; margin-bottom:20px; justify-content:center;">
+                    <div>무게: <input type="number" value="${ex.weight}" onchange="updateVal('weight', this.value)" style="width:60px;"></div>
+                    <div>횟수: <input type="number" value="${ex.count}" onchange="updateVal('count', this.value)" style="width:60px;"></div>
+                  </div>`;
+    } else if (ex.unitType === 'count') {
+        displayHTML = `<div class="display-value" onclick="toggleEdit()" style="font-size:40px; color:#007bff; font-weight:bold; cursor:pointer; margin-bottom:20px;">${ex.count}회</div>`;
+        editUI = `<div id="editBox" style="display:${isEditing?'block':'none'}; margin-bottom:20px;">횟수: <input type="number" value="${ex.count}" onchange="updateVal('count', this.value)" style="width:60px;"></div>`;
+    } else {
+        displayHTML = `<div class="display-value" onclick="toggleEdit()" style="font-size:40px; color:#007bff; font-weight:bold; cursor:pointer; margin-bottom:20px;">${ex.time}초</div>`;
+        editUI = `<div id="editBox" style="display:${isEditing?'block':'none'}; margin-bottom:20px;">시간: <input type="number" value="${ex.time}" onchange="updateVal('time', this.value)" style="width:60px;"></div>`;
+    }
+
+    const content = `
+        <div class="exercise-image-area" style="height:250px; background:#f1f3f5; width:100%; display:flex; align-items:center; justify-content:center; margin-bottom:20px;">
+            <span>[ ${ex.name} 가이드 ]</span>
+        </div>
+        ${modeTabs}
+        <h1 style="margin:0;">${ex.name}</h1>
+        <h2 style="color:#888; margin-bottom:20px;">Set ${currentSet} / ${ex.sets}</h2>
+        ${displayHTML}
+        ${editUI}
+    `;
+
+    const btn = `
+        <button class="wide-blue-btn" onclick="handleSetComplete()" style="width:100%; height:100px; background:#007bff; color:white; border:none; border-radius:15px; font-size:24px; font-weight:bold; margin-bottom:10px; cursor:pointer;">
+            ${currentSet === ex.sets ? "종목 완료" : "세트 완료"}
+        </button>
+        <button class="skip-ex-btn" onclick="moveToNext()" style="width:100%; height:50px; background:#eee; color:#666; border:none; border-radius:10px; font-size:16px; cursor:pointer;">이 세트 건너뛰기</button>
+    `;
+
+    app.innerHTML = getFullLayout(content, btn);
 }
 
-/* 버튼 크기 차등 적용 */
-.wide-blue-btn {
-    width: 100%;
-    height: 90px;
-    font-size: 24px;
-    margin-bottom: 10px;
+function changeMode(mode) {
+    exercises[currentExIdx].unitType = mode;
+    isEditing = false;
+    renderExercise();
 }
 
-.skip-ex-btn {
-    width: 100%;
-    height: 50px; /* 세트완료보다 작게 */
-    background: #eee;
-    color: #666;
-    font-size: 16px;
+function updateVal(field, val) {
+    exercises[currentExIdx][field] = Number(val);
+    renderExercise();
 }
 
-/* 모드 전환 탭 */
-.mode-tab-container {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
+function toggleEdit() {
+    isEditing = !isEditing;
+    renderExercise();
 }
 
-.mode-tab {
-    padding: 5px 10px;
-    font-size: 12px;
-    border: 1px solid #ddd;
-    border-radius: 20px;
-    cursor: pointer;
+function handleSetComplete() {
+    workoutHistory.push({ name: exercises[currentExIdx].name, set: currentSet });
+    moveToNext();
 }
 
-.mode-tab.active {
-    background: #007bff;
-    color: white;
-    border-color: #007bff;
+function moveToNext() {
+    const ex = exercises[currentExIdx];
+    if (currentSet < ex.sets) {
+        currentSet++;
+        startRest(false);
+    } else {
+        currentSet = 1;
+        startRest(true);
+    }
 }
+
+function startRest(isNextEx) {
+    let timeLeft = isNextEx ? 30 : 20;
+    const nextName = isNextEx ? (exercises[currentExIdx + 1]?.name || "종료") : exercises[currentExIdx].name;
+
+    const timerInterval = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            clearInterval(timerInterval);
+            goNext();
+        } else {
+            app.innerHTML = getFullLayout(`
+                <div class="exercise-image-area" style="height:250px; background:#eee; width:100%; display:flex; align-items:center; justify-content:center; margin-bottom:20px;"><span>[ 휴식 중 ]</span></div>
+                <h2 style="color:#adb5bd;">휴식 중...</h2>
+                <h1 style="font-size:100px; margin:20px 0;">${timeLeft}s</h1>
+                <p>다음: <strong>${nextName}</strong></p>
+            `, `<button class="wide-blue-btn" onclick="window.skipRest()" style="width:100%; height:100px; background:#007bff; color:white; border:none; border-radius:15px; font-size:24px; font-weight:bold; cursor:pointer;">휴식 건너뛰기</button>`);
+        }
+    }, 1000);
+
+    const goNext = () => {
+        clearInterval(timerInterval);
+        if (isNextEx) {
+            currentExIdx++;
+            if (currentExIdx < exercises.length) renderExercise();
+            else renderReport();
+        } else {
+            renderExercise();
+        }
+    };
+    window.skipRest = goNext;
+}
+
+function renderReport() {
+    app.innerHTML = `<div class="container" style="text-align:center; padding-top:100px;"><h1>🏆 오운완!</h1><button class="wide-blue-btn" onclick="location.reload()" style="width:80%; height:80px; background:#007bff; color:white; border:none; border-radius:15px; font-size:20px; font-weight:bold; cursor:pointer;">완료</button></div>`;
+}
+
+init();
