@@ -1,78 +1,103 @@
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Pretendard', sans-serif;
-    background-color: #f8f9fa;
-    display: flex;
-    justify-content: center; /* 가로 중앙 */
-    align-items: center;     /* 세로 중앙 */
-    height: 100vh;
-    overflow: hidden;
+const savedData = localStorage.getItem('my_workout_routine');
+const workoutData = savedData ? JSON.parse(savedData) : null;
+const app = document.getElementById('app');
+
+let currentExIdx = 0;   
+let currentSet = 1;     
+
+const exercises = [
+    { name: "푸쉬업", type: "count", sets: 3 },
+    { name: "스쿼트", type: "time", workTime: 40, restTime: 20, sets: 4 },
+    { name: "런지", type: "count", sets: 3 },
+    { name: "플랭크", type: "time", workTime: 30, restTime: 15, sets: 3 }
+];
+
+function init() {
+    if (workoutData) { renderMain(); } 
+    else { renderSetup(); }
 }
 
-#app {
-    width: 100%;
-    max-width: 500px;
-    background-color: #ffffff;
-    height: 100%;
-    box-shadow: 0 0 20px rgba(0,0,0,0.05);
+function renderMain() {
+    app.innerHTML = `
+        <div class="container">
+            <h1>오늘의 루틴</h1>
+            <p style="font-size: 20px; margin-bottom: 40px;"><strong>${workoutData.name}</strong></p>
+            <button class="wide-blue-btn" onclick="startWorkout()">운동 시작</button>
+        </div>
+    `;
 }
 
-.container {
-    height: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;      /* 내부 요소 중앙 정렬 */
-    justify-content: center;   /* 상하 중앙 배치 */
-    padding: 20px;
-    box-sizing: border-box;
-    text-align: center;       /* 텍스트 중앙 정렬 */
+function renderExercise() {
+    const ex = exercises[currentExIdx];
+    app.innerHTML = `
+        <div class="container">
+            <div class="top-progress">종목 진행 (${currentExIdx + 1}/${exercises.length})</div>
+            <div class="exercise-image-area">
+                <span style="color:#aaa;">[ ${ex.name} 동작 GIF 가이드 ]</span>
+            </div>
+            <h1 style="font-size: 50px; margin: 10px 0;">${ex.name}</h1>
+            <h2 style="color: #007bff; margin-bottom: 40px;">Set ${currentSet} / ${ex.sets}</h2>
+            <button class="wide-blue-btn" onclick="handleSetComplete()">
+                ${currentSet === ex.sets ? "종목 완료" : "세트 완료"}
+            </button>
+        </div>
+    `;
 }
 
-/* 상단 고정 영역을 위한 스타일 */
-.top-info {
-    position: absolute;
-    top: 40px;
+function handleSetComplete() {
+    const ex = exercises[currentExIdx];
+    if (currentSet < ex.sets) {
+        currentSet++;
+        startRest(false); 
+    } else {
+        currentSet = 1;
+        startRest(true); 
+    }
 }
 
-/* 가이드 이미지 영역 */
-.exercise-image-area {
-    width: 100%;
-    height: 200px;
-    background-color: #eeeeee;
-    border-radius: 15px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    margin-bottom: 20px;
+function startRest(isNextEx) {
+    let timeLeft = isNextEx ? 60 : (exercises[currentExIdx].restTime || 20);
+    const nextName = isNextEx ? (exercises[currentExIdx + 1]?.name || "종료") : exercises[currentExIdx].name;
+
+    const renderRestUI = (time) => {
+        app.innerHTML = `
+            <div class="container">
+                <h2 style="color:#adb5bd;">휴식 중...</h2>
+                <h1 style="font-size: 110px; margin: 20px 0;">${time}s</h1>
+                <p style="font-size: 22px; margin-bottom: 50px;">다음: <strong>${nextName}</strong></p>
+                <button class="wide-blue-btn" onclick="skipRest()">휴식 건너뛰기</button>
+            </div>
+        `;
+    };
+
+    renderRestUI(timeLeft);
+
+    const timer = setInterval(() => {
+        timeLeft--;
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            goNext();
+        } else {
+            renderRestUI(timeLeft);
+        }
+    }, 1000);
+
+    const goNext = () => {
+        clearInterval(timer);
+        if (isNextEx) {
+            currentExIdx++;
+            if (currentExIdx < exercises.length) renderExercise();
+            else renderFinished();
+        } else {
+            renderExercise();
+        }
+    };
+    window.skipRest = goNext;
 }
 
-/* 파란색 와이드 사각형 버튼 */
-.wide-blue-btn {
-    width: 100%;
-    height: 100px;
-    border-radius: 15px;
-    border: none;
-    background: #007bff;
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
-}
+function startWorkout() { renderExercise(); }
+function renderFinished() { app.innerHTML = `<div class="container"><h1>🎉 오운완!</h1><button class="wide-blue-btn" onclick="location.reload()">처음으로</button></div>`; }
+function renderSetup() { app.innerHTML = `<div class="container"><h1>반가워요!</h1><button class="wide-blue-btn" onclick="saveBasic()">루틴 생성</button></div>`; }
+function saveBasic() { localStorage.setItem('my_workout_routine', JSON.stringify({name:"기본 루틴"})); location.reload(); }
 
-.wide-blue-btn:active {
-    background: #0056b3;
-    transform: scale(0.98);
-}
-
-.progress-label {
-    font-size: 16px;
-    color: #999;
-    margin-bottom: 5px;
-}
-
-.bottom-nav {
-    position: absolute;
-    bottom: 30px;
-}
+init();
