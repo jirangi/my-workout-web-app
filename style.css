@@ -1,1 +1,13 @@
+body { margin: 0; padding: 0; font-family: sans-serif; background-color: #ffffff; display: flex; justify-content: center; height: 100vh; overflow: hidden; }
 
+#app { width: 100%; max-width: 500px; }
+
+.container { height: 100vh; display: flex; flex-direction: column; align-items: center; justify-content: space-between; padding: 50px 20px 100px 20px; box-sizing: border-box; }
+
+.big-start-btn { width: 250px; height: 250px; border-radius: 50%; border: none; background: linear-gradient(145deg, #007bff, #0056b3); color: white; font-size: 30px; font-weight: bold; box-shadow: 0 10px 30px rgba(0, 123, 255, 0.4); cursor: pointer; }
+
+.bottom-nav { position: fixed; bottom: 0; width: 100%; max-width: 500px; height: 70px; display: flex; justify-content: space-around; align-items: center; background: #f1f3f5; border-top: 1px solid #e9ecef; }
+
+.bottom-nav button { background: none; border: none; color: #495057; font-size: 14px; }
+
+.setup-btn { padding: 20px 40px; background: #343a40; color: white; border: none; border-radius: 12px; font-size: 18px; }
