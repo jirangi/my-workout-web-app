@@ -1,32 +1,65 @@
-/* 기존 .big-start-btn을 대체하거나 추가하세요 */
-.wide-rect-btn {
-    width: 90%;
-    height: 120px;
-    border-radius: 15px;
-    border: none;
-    background: linear-gradient(145deg, #007bff, #0056b3);
-    color: white;
-    font-size: 24px;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-    cursor: pointer;
-    margin: 20px 0;
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Pretendard', sans-serif;
+    background-color: #f8f9fa;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+#app {
+    width: 100%;
+    max-width: 500px;
+    height: 100%;
+    background-color: #ffffff;
+    display: flex;
+    flex-direction: column;
+}
+
+.container {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;    /* 가로 중앙 */
+    justify-content: center; /* 세로 중앙 */
+    padding: 20px;
+    text-align: center;
+    position: relative;
+}
+
+.top-progress {
+    position: absolute;
+    top: 50px;
+    font-size: 18px;
+    color: #888;
 }
 
 .exercise-image-area {
     width: 100%;
-    height: 200px;
-    background-color: #f8f9fa;
-    border-radius: 15px;
+    height: 220px;
+    background-color: #f1f3f5;
+    border-radius: 20px;
     display: flex;
     align-items: center;
     justify-content: center;
-    margin-bottom: 20px;
-    border: 1px dashed #dee2e6;
+    margin-bottom: 30px;
 }
 
-.progress-text {
-    font-size: 18px;
-    color: #888;
-    margin-bottom: 5px;
+.wide-blue-btn {
+    width: 100%;
+    height: 120px;
+    border-radius: 20px;
+    border: none;
+    background: #007bff;
+    color: white;
+    font-size: 26px;
+    font-weight: bold;
+    cursor: pointer;
+    box-shadow: 0 8px 20px rgba(0, 123, 255, 0.25);
+}
+
+.wide-blue-btn:active {
+    transform: scale(0.97);
 }
