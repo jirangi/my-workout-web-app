@@ -1,99 +1,50 @@
-body {
-    margin: 0;
-    padding: 0;
-    font-family: 'Pretendard', sans-serif;
-    background-color: #f8f9fa;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    height: 100vh;
-}
-
-#app {
-    width: 100%;
-    max-width: 500px;
-    height: 100%;
-    background-color: #ffffff;
-    display: flex;
-    flex-direction: column;
-    position: relative;
-}
-
-/* 상단 헤더: 진행도와 종료 버튼 */
-.header-area {
-    width: 100%;
-    height: 60px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    box-sizing: border-box;
-    border-bottom: 1px solid #eee;
+/* 상단 헤더 버튼 스타일 수정 */
+.header-btn {
+    background: #f1f3f5;
+    color: #666;
+    border: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: bold;
+    cursor: pointer;
 }
 
 .exit-btn {
     background: #ff4757;
     color: white;
-    border: none;
-    padding: 5px 12px;
-    border-radius: 8px;
-    font-weight: bold;
-    cursor: pointer;
 }
 
-/* 가이드 이미지 영역: 크기 절대 고정 */
-.exercise-image-area {
-    width: 100%;
-    height: 250px; /* 높이 고정 */
-    background-color: #f1f3f5;
-    display: flex;
-    align-items: center;
+/* 전체 순서 모달 스타일 */
+.modal-overlay {
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0,0,0,0.7);
+    display: none; /* 기본 숨김 */
+    z-index: 100;
     justify-content: center;
-    margin-bottom: 20px;
-    flex-shrink: 0; /* 크기 줄어듦 방지 */
-}
-
-/* 메인 콘텐츠 영역 */
-.main-content {
-    flex: 1;
-    width: 100%;
-    display: flex;
-    flex-direction: column;
     align-items: center;
-    padding: 0 20px;
-    box-sizing: border-box;
 }
 
-/* 하단 버튼 영역: 위치 고정 및 크기 확대 */
-.action-area {
-    padding: 20px;
-    width: 100%;
-    box-sizing: border-box;
+.modal-content {
+    width: 85%;
+    max-height: 70%;
+    background: white;
+    border-radius: 20px;
+    padding: 25px;
+    overflow-y: auto;
+    position: relative;
 }
 
-.wide-blue-btn {
-    width: 100%;
-    height: 90px;
-    border-radius: 15px;
-    border: none;
-    background: #007bff;
-    color: white;
-    font-size: 24px;
+.routine-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 12px 0;
+    border-bottom: 1px solid #eee;
+}
+
+.routine-item.current {
+    color: #007bff;
     font-weight: bold;
-    cursor: pointer;
-    box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
-}
-
-/* 광고 자리 (미리 확보) */
-.ad-space {
-    width: 100%;
-    height: 60px;
-    background: #fafafa;
-    border: 1px dashed #ddd;
-    margin-top: 10px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #ccc;
 }
