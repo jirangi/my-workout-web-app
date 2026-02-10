@@ -18,9 +18,8 @@ function init() {
     else renderSetup();
 }
 
-// 레이아웃 엔진: 광고 영역 및 종료 버튼 상시 포함
-function getFullLayout(topText, contentHTML, btnHTML, showAd = false) {
-    const adHTML = showAd ? `<div class="ad-space">ADVERTISEMENT</div>` : '';
+// 레이아웃 엔진: 광고 영역 제거 및 종료 버튼 상시 포함
+function getFullLayout(topText, contentHTML, btnHTML) {
     return `
         <div class="header-area">
             <span style="color:#888;">${topText}</span>
@@ -31,7 +30,6 @@ function getFullLayout(topText, contentHTML, btnHTML, showAd = false) {
         </div>
         <div class="action-area">
             ${btnHTML}
-            ${adHTML}
         </div>
     `;
 }
@@ -79,6 +77,9 @@ function startRest(isNextEx) {
     let timeLeft = isNextEx ? 30 : (exercises[currentExIdx].restTime || 20);
     const nextName = isNextEx ? (exercises[currentExIdx + 1]?.name || "종료") : exercises[currentExIdx].name;
 
+    // 전면 광고 송출 가상 함수 호출 (추후 여기에 AdMob 등 SDK 연결)
+    console.log("휴식 시간: 전면 광고 송출을 준비합니다.");
+
     const timerFunc = () => {
         const content = `
             <div class="exercise-image-area"><span>[ 휴식 중 ]</span></div>
@@ -87,7 +88,7 @@ function startRest(isNextEx) {
             <p>다음: <strong>${nextName}</strong></p>
         `;
         const btn = `<button class="wide-blue-btn" onclick="skipRest()">휴식 건너뛰기</button>`;
-        app.innerHTML = getFullLayout(`진행 중`, content, btn, true); // 광고 활성화
+        app.innerHTML = getFullLayout(`진행 중`, content, btn); 
     };
 
     timerFunc();
@@ -109,7 +110,6 @@ function startRest(isNextEx) {
 }
 
 function renderReport() {
-    // 종목별 수행 세트 계산
     const summary = exercises.map(ex => {
         const setsDone = workoutHistory.filter(h => h.name === ex.name).length;
         if (setsDone === 0) return '';
@@ -121,12 +121,6 @@ function renderReport() {
     const content = `<h1>🏆 운동 리포트</h1><div style="width:100%; overflow-y:auto;">${summary || '수행한 운동이 없습니다.'}</div>`;
     const btn = `<button class="wide-blue-btn" onclick="location.reload()">오늘의 운동 완료하기</button>`;
     app.innerHTML = getFullLayout("Result", content, btn);
-}
-
-function renderSetup() {
-    const content = `<h1>반가워요!</h1><p>루틴을 생성해주세요.</p>`;
-    const btn = `<button class="wide-blue-btn" onclick="saveBasic()">루틴 생성</button>`;
-    app.innerHTML = getFullLayout("Setup", content, btn);
 }
 
 function saveBasic() {
