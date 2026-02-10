@@ -1,137 +1,122 @@
-// 1. 초기 데이터 및 상태 설정
+// 1. 초기 데이터 및 상세 운동 루틴 설정
 const savedData = localStorage.getItem('my_workout_routine');
 const workoutData = savedData ? JSON.parse(savedData) : null;
 const app = document.getElementById('app');
 
-// 현재 운동 진행 상태 (인덱스)
-let currentExerciseIndex = 0;
-const exercises = ["푸쉬업", "스쿼트", "런지", "플랭크"]; // 기본 루틴 예시
+let currentExIdx = 0;   // 현재 종목 인덱스
+let currentSet = 1;     // 현재 세트 번호
+
+// 운동 리스트: 종목수와 세트수를 포함하도록 확장
+const exercises = [
+    { name: "푸쉬업", type: "count", sets: 3 },
+    { name: "스쿼트", type: "time", workTime: 40, restTime: 20, sets: 4 },
+    { name: "런지", type: "count", sets: 3 },
+    { name: "플랭크", type: "time", workTime: 30, restTime: 15, sets: 3 }
+];
 
 function init() {
-    if (workoutData) {
-        renderMain();
-    } else {
-        renderSetup();
-    }
+    if (workoutData) { renderMain(); } 
+    else { renderSetup(); }
 }
 
-// 2. 메인 화면
 function renderMain() {
     app.innerHTML = `
         <div class="container">
             <h1>오늘의 루틴</h1>
             <p><strong>${workoutData.name}</strong></p>
-            <button class="big-start-btn" onclick="startWorkout()">운동 시작</button>
-            <div class="bottom-nav">
-                <button onclick="resetData()">초기화</button>
-            </div>
+            <button class="wide-rect-btn" onclick="startWorkout()">운동 시작</button>
         </div>
     `;
 }
 
-// 3. 운동 진행 화면 (핵심 기능)
-function startWorkout() {
-    renderExercise();
-}
-
 function renderExercise() {
-    const exerciseName = exercises[currentExerciseIndex];
-    const nextExercise = exercises[currentExerciseIndex + 1] || "모든 운동 완료!";
-
+    const ex = exercises[currentExIdx];
+    const totalEx = exercises.length;
+    
     app.innerHTML = `
         <div class="container">
-            <h2>현재 운동</h2>
-            <h1 style="font-size: 50px; color: #007bff;">${exerciseName}</h1>
-            <p style="color: #666;">다음 예정: ${nextExercise}</p>
+            <div class="progress-text">종목 진행: (${currentExIdx + 1}/${totalEx})</div>
+            <div class="exercise-image-area">
+                <span>[ ${ex.name} 동작 가이드 이미지 ]</span>
+            </div>
             
-            <button class="big-start-btn" onclick="startRest()">운동 완료</button>
+            <h1 style="font-size: 45px; color: #333; margin: 10px 0;">${ex.name}</h1>
+            <h2 style="color: #007bff; margin-bottom: 20px;">Set ${currentSet} / ${ex.sets}</h2>
+            
+            <button class="wide-rect-btn" onclick="handleSetComplete()">
+                ${currentSet === ex.sets ? "종목 완료" : "세트 완료"}
+            </button>
             
             <div class="bottom-nav">
                 <button onclick="location.reload()">중단하기</button>
             </div>
         </div>
     `;
+
+    // 시간제 운동일 경우 자동으로 타이머/음성 로직 실행 (생략 가능)
+    if (ex.type === "time") {
+        // 이전에 구현한 startTimedExercise 로직을 여기에 연결 가능
+    }
 }
 
-// 4. 휴식 타이머 화면
-function startRest() {
-    let timeLeft = workoutData.restTime || 60;
+// [세트 완료 버튼 클릭 시]
+function handleSetComplete() {
+    const ex = exercises[currentExIdx];
     
-    // 화면 업데이트
-    function updateTimer() {
-        app.innerHTML = `
-            <div class="container">
-                <h2>휴식 중...</h2>
-                <h1 style="font-size: 80px;">${timeLeft}s</h1>
-                <p>다음 운동: <strong>${exercises[currentExerciseIndex + 1] || "종료"}</strong></p>
-                
-                <button class="setup-btn" onclick="skipRest()">휴식 건너뛰기</button>
-            </div>
-        `;
+    if (currentSet < ex.sets) {
+        // 아직 세트가 남았으면 휴식 후 같은 운동 재개
+        currentSet++;
+        startRest(false); // 같은 종목 반복
+    } else {
+        // 모든 세트 완료 시 다음 종목으로
+        currentSet = 1;
+        startRest(true); // 다음 종목으로 이동
     }
+}
 
-    updateTimer();
-
-    const timerInterval = setInterval(() => {
+function startRest(isNextEx) {
+    const ex = exercises[currentExIdx];
+    let timeLeft = ex.restTime || 60;
+    
+    const restInterval = setInterval(() => {
         timeLeft--;
         if (timeLeft <= 0) {
-            clearInterval(timerInterval);
-            nextExercise();
+            clearInterval(restInterval);
+            if (isNextEx) { nextExercise(); } 
+            else { renderExercise(); }
         } else {
-            updateTimer();
+            renderRestUI(timeLeft, isNextEx);
         }
     }, 1000);
 
-    // 전역 함수로 등록하여 버튼 클릭 가능하게 함
     window.skipRest = () => {
-        clearInterval(timerInterval);
-        nextExercise();
+        clearInterval(restInterval);
+        if (isNextEx) { nextExercise(); } 
+        else { renderExercise(); }
     };
 }
 
-// 5. 다음 운동으로 이동 로직
+function renderRestUI(time, isNextEx) {
+    const nextInfo = isNextEx ? (exercises[currentExIdx + 1]?.name || "종료") : exercises[currentExIdx].name;
+    app.innerHTML = `
+        <div class="container">
+            <h2>휴식 중...</h2>
+            <h1 style="font-size: 80px;">${time}s</h1>
+            <p>준비: <strong>${nextInfo}</strong></p>
+            <button class="setup-btn" onclick="window.skipRest()">휴식 건너뛰기</button>
+        </div>
+    `;
+}
+
 function nextExercise() {
-    currentExerciseIndex++;
-    if (currentExerciseIndex < exercises.length) {
-        renderExercise();
-    } else {
-        renderFinished();
-    }
+    currentExIdx++;
+    if (currentExIdx < exercises.length) { renderExercise(); } 
+    else { renderFinished(); }
 }
 
-// 6. 모든 운동 완료 화면
-function renderFinished() {
-    app.innerHTML = `
-        <div class="container">
-            <h1>오운완! 🎉</h1>
-            <p>오늘 준비된 모든 운동을 마쳤습니다.</p>
-            <button class="setup-btn" onclick="location.reload()">메인으로</button>
-        </div>
-    `;
-}
-
-// 7. 기타 기능
-function renderSetup() {
-    app.innerHTML = `
-        <div class="container">
-            <h1>반가워요!</h1>
-            <p>루틴을 먼저 만들어주세요.</p>
-            <button class="setup-btn" onclick="saveBasic()">기본 루틴 저장</button>
-        </div>
-    `;
-}
-
-function saveBasic() {
-    const basic = { name: "초보자 가이드", restTime: 60 };
-    localStorage.setItem('my_workout_routine', JSON.stringify(basic));
-    location.reload();
-}
-
-function resetData() {
-    if(confirm("초기화하시겠습니까?")) {
-        localStorage.removeItem('my_workout_routine');
-        location.reload();
-    }
-}
+function startWorkout() { renderExercise(); }
+function renderFinished() { app.innerHTML = `<div class="container"><h1>🎉 오운완!</h1><button class="setup-btn" onclick="location.reload()">메인으로</button></div>`; }
+function renderSetup() { app.innerHTML = `<div class="container"><h1>반가워요!</h1><button class="setup-btn" onclick="saveBasic()">루틴 생성</button></div>`; }
+function saveBasic() { localStorage.setItem('my_workout_routine', JSON.stringify({name:"기본 루틴"})); location.reload(); }
 
 init();
